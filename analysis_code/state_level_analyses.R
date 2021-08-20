@@ -155,8 +155,8 @@ sds %>%
   geom_hline(yintercept = 0, lty = 2) +
   labs(x = "Age (Years)",
        y = "Std. Deviation of County Turnout",
-       title = "Within-State, Within-Age Std. Deviations of County Turnout"m
-       subtitle = "(Points correspond to states")
+       title = "Within-State, Within-Age Std. Deviations of County Turnout",
+       subtitle = "(Points correspond to states)")
 ggsave("../results/turnout_sd.pdf")
 
 
