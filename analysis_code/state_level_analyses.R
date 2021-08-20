@@ -1,12 +1,8 @@
 library(tidyverse)
 library(ggrepel)
+library(cowplot)
 
-theme_set(theme_bw())
-theme_update(
-  panel.grid.major = element_blank(),
-  panel.grid.minor = element_blank()
-)
-
+theme_set(theme_cowplot())
 
 states <- list.files("../data/vf_demographic/") %>%
   str_replace(".csv", "") %>%
@@ -108,6 +104,64 @@ for (state in states) {
 usable_states <- list.files("../results/county_correlations/") %>%
   str_replace(".csv", "") %>%
   sort()
+
+
+
+# County Variance Analysis ------------------------------------------------
+
+d <- list()
+for (i in 1:length(usable_states)) {
+  d[[i]] <- read_csv(paste0(
+    "../results/county_predictions/",
+    usable_states[i],
+    ".csv"
+  ),
+  progress = FALSE,
+  col_types = cols()
+  ) %>% 
+    mutate(state = usable_states[i])
+}
+
+d <- bind_rows(d)
+
+
+d %>% 
+  filter(state %in% c("OH", "PA", "AZ", "GA")) %>% 
+  ggplot(aes(age, true_rate)) +
+  facet_wrap(~state) +
+  geom_point(shape = 1, alpha = 0.5) +
+  labs(y = "Turnout Rate", x = "Age (Years)",
+       title = "Variation in County Turnout Rates by Age")
+ggsave("../results/turnout_spread_select.pdf")
+
+d %>% 
+  ggplot(aes(age, true_rate)) +
+  facet_wrap(~state) +
+  geom_point(shape = 1, alpha = 0.1) +
+  labs(y = "Turnout Rate", x = "Age (Years)",
+       title = "Variation in County Turnout Rates by Age")
+# ggsave("../results/turnout_spread_all.pdf") # actually have to manually save this in Rstudio because it's too large for ggplot on my device
+
+
+
+sds <- d %>%
+  group_by(state, age) %>% 
+  summarize(s = sd(true_rate)) %>% 
+  ungroup()
+  
+sds %>% 
+  ggplot(aes(age, s)) +
+  geom_point(shape = 1, alpha = 0.5) +
+  geom_hline(yintercept = 0, lty = 2) +
+  labs(x = "Age (Years)",
+       y = "Std. Deviation of County Turnout",
+       title = "Within-State, Within-Age Std. Deviations of County Turnout"m
+       subtitle = "(Points correspond to states")
+ggsave("../results/turnout_sd.pdf")
+
+
+# Correlations Analysis ---------------------------------------------------
+
 
 d <- list()
 for (i in 1:length(usable_states)) {
